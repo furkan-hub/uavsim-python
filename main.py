@@ -9,16 +9,19 @@ S = 0.180
 
 # Initial values
 uav_trust = 0
-uav_weight = 0
+uav_weight = 20
 uav_speed = 0
-chanel_trust = 37
+uav_climb_accel = 0
+
 uav_roll = 0
-uav_yaw= 0
+uav_yaw = 0
 uav_pitch = 0
-loc_lat= 0
+
+loc_lat = 0
 loc_lon = 0
 loc_alt = 0
 
+chanel_trust = 10
 chanel_roll = 0
 chanel_pitch = 0
 chanel_yaw = 0
@@ -30,11 +33,15 @@ simulasyon_suresi = 100
 dt = 0.1
 
 # Calculate lift and drag
+
+
 def lift(speed):
     return 0.5 * CL * ro * S * (speed ** 2)
 
+
 def drag(speed):
     return 0.5 * CD * ro * S * (speed ** 2)
+
 
 # Simulation loop
 for t in range(int(simulasyon_suresi/dt)):
@@ -45,9 +52,11 @@ for t in range(int(simulasyon_suresi/dt)):
     #     uav_trust = 0
     uav_trust = chanel_trust
     # Calculate acceleration, velocity, lift
-    uav_accel = (uav_trust - drag(uav_speed)) / uav_weight
+    uav_accel = (uav_trust - drag(uav_speed)) / (uav_weight/9.81)
     uav_speed += uav_accel * dt
     uav_lift = lift(uav_speed)
+    uav_climb_accel = (uav_lift-uav_weight) / (uav_weight/9.81)
+
 
     # Print current state
     print("Time: ", t*dt)
@@ -62,13 +71,7 @@ for t in range(int(simulasyon_suresi/dt)):
     uav_pitch += uav_pitch_rate * dt
     uav_yaw += uav_yaw_rate * dt
 
-    # Update the position of the UAV based on its current speed and direction (which is determined by roll, pitch and yaw)
-    # NOTE: In reality, the relationship between roll, pitch, yaw and the direction of motion is more complex and depends on the specific aerodynamics and control systems of the UAV.
-    # However, for this simple simulation, we can assume that the UAV moves in the direction of its roll (x-direction), pitch (y-direction) and yaw (z-direction).
-
-    loc_lat += uav_speed * dt * uav_roll
-    loc_lon += uav_speed * dt * uav_pitch
-    loc_alt += uav_speed * dt * uav_yaw
+    loc_alt += uav_climb_accel *dt
 
     os.system("cls")
 
@@ -83,7 +86,6 @@ for t in range(int(simulasyon_suresi/dt)):
     print("Lift: ", lift(uav_speed))
     print("Position: Lat {}, Lon {}, Alt {}".format(loc_lat, loc_lon, loc_alt))
     print("------")
-
 
     # Sleep for a while to match the real-time speed
     time.sleep(dt)
