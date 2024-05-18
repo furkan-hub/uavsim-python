@@ -8,7 +8,7 @@ import os
 
 root = Tk()
 root.title("UAV SIM")
-root.geometry("640x480")
+root.geometry("320x260")
 root.configure(border=0)
 root.configure(bg="black")
 root.update()
@@ -25,7 +25,7 @@ WHITE = "#FFFFFF"
 #region params
 
 # Constants
-CL = 0.620
+CL = 0.290
 CD_horizontal = 0.113
 CD_vertical = 0.300
 
@@ -34,7 +34,7 @@ S = 0.180 # m^2
 
 # Initial values
 uav_trust = 0 # newton
-uav_weight = 25 # Newton
+uav_weight = 50 # Newton
 uav_horizontal_speed = 0 # m/s
 uav_veritcal_speed = 0
 uav_climb_accel = 0 #newton
@@ -44,14 +44,14 @@ uav_roll = 0 #degres
 uav_yaw = 0 #degres
 uav_pitch = 0 #degres
 
-MAX_SPEED = 23
+MAX_SPEED = 30
 
 loc_lat = 0
 loc_lon = 0
 loc_alt = 0
 
 #pwm
-chanel_trust = 37
+chanel_trust = 0
 chanel_roll = 0 
 chanel_pitch = 0
 chanel_yaw = 0
@@ -71,15 +71,16 @@ def lift(speed):
 def drag(speed,CD):
     return 0.5 * CD * rho * S * (speed ** 2)
 
-def func1():
-    print("test")
-
 def update():
-    uav_input_trust = input_trust.get()
+    global uav_trust
+
+    uav_trust = input_trust.get()
     uav_input_roll = input_roll.get()
     uav_input_yaw = input_yaw.get()
     uav_input_pitch = input_pitch.get()
-    print(uav_input_trust,uav_input_roll,uav_input_yaw,uav_input_pitch)
+    #print(uav_input_trust,uav_input_roll,uav_input_yaw,uav_input_pitch)
+
+    return [uav_trust,uav_input_roll,uav_input_yaw,uav_input_pitch]
 
 
 def loop():
@@ -87,39 +88,36 @@ def loop():
     for t in range(int(simulasyon_suresi/dt)):
         # Update thrust
 
-        uav_trust = chanel_trust
+        uav_trust = update()[0]
 
 
         # Calculate acceleration, velocity, lift
         uav_lift = lift(uav_horizontal_speed)
 
-
-        uav_accel = (uav_trust - drag(uav_horizontal_speed,CD_horizontal)) / (uav_weight/9.81)
+        uav_accel = (uav_trust - drag(uav_horizontal_speed, CD_horizontal)) / (uav_weight/9.81)
         uav_horizontal_speed += (uav_accel * dt)
+    
+        # Dikey hız için maksimum ve minimum sınırların uygulanması
+        uav_veritcal_accel = (uav_lift - (drag(uav_veritcal_speed, CD_vertical)+uav_weight)) / (uav_weight/9.81)
+        uav_veritcal_speed += uav_veritcal_accel * dt
 
-        uav_veritcal_speed += uav_climb_accel *dt
-        uav_climb_accel = ((uav_lift-uav_weight-drag(uav_veritcal_speed,CD_vertical))) / (uav_weight/9.81)
 
-        uav_horizontal_speed = max(min(uav_horizontal_speed, MAX_SPEED), -MAX_SPEED)
-        uav_veritcal_speed = max(min(uav_veritcal_speed, MAX_SPEED), -MAX_SPEED)
-
+        """uav_horizontal_speed = max(min(uav_horizontal_speed, MAX_SPEED), -MAX_SPEED)
+        uav_veritcal_speed = max(min(uav_veritcal_speed, MAX_SPEED), -MAX_SPEED)"""
+        
         # Print current state
         print("Time: ", t*dt)
-        # Update roll, pitch, yaw based on current channel inputs
-        # NOTE: Here, we might assume the channel inputs directly correspond to the roll, pitch and yaw rates
-        uav_roll_rate = chanel_roll
-        uav_pitch_rate = chanel_pitch
-        uav_yaw_rate = chanel_yaw
-
+       
         # Based on the above assumption, update roll, pitch, yaw
-        uav_roll += uav_roll_rate * dt
+        """uav_roll += uav_roll_rate * dt
         uav_pitch += uav_pitch_rate * dt
-        uav_yaw += uav_yaw_rate * dt
+        uav_yaw += uav_yaw_rate * dt"""
 
         loc_alt += uav_veritcal_speed * dt
 
         if loc_alt < 0:
             loc_alt = 0
+            uav_veritcal_speed = 0
 
         os.system("cls")
 
@@ -131,8 +129,8 @@ def loop():
         print("Yaw: ", uav_yaw)
         print("Speed-veritcal: ", uav_veritcal_speed)
         print("Speed-horizontal: ", uav_horizontal_speed)
-        # print("Drag:-vertical ", drag(uav_veritcal_speed,uav_veritcal_speed))
-        # print("Drag:-horizontal ", drag(uav_horizontal_speed,uav_horizontal_speed))
+        print("Drag:-vertical ", drag(uav_veritcal_speed,uav_veritcal_speed))
+        print("Drag:-horizontal ", drag(uav_horizontal_speed,uav_horizontal_speed))
         print("Lift: ", uav_lift)
         print("Position: Lat {}, Lon {}, Alt {}".format(loc_lat, loc_lon, loc_alt))
         print("------")
@@ -147,34 +145,17 @@ def loop():
             
         
 
-#region button
-"""lock_send_but = Button(root, text="lock_send", command=lock_send,
-                      padx=20, pady=4, border=4, bg=DAHALIGHT_GRAY)
-
-lock_send_but.place(x=50, y=50)
-
-qr_start_but = Button(root, text="qr_basla", command=qr_basla,
-                      padx=20, pady=4, border=4, bg=DAHALIGHT_GRAY)
-
-qr_start_but.place(x=200, y=50)
-
-qr_end_but = Button(root, text="qr_bittir", command=qr_bittir,
-                      padx=20, pady=4, border=4, bg=DAHALIGHT_GRAY)
-
-qr_end_but.place(x=350, y=50)"""
-#endregion
-
 #region slider
-input_trust = Scale(root, from_=1000, to=2000, length=200, orient=VERTICAL)
+input_trust = Scale(root, from_=0, to=30, length=200, orient=VERTICAL)
 input_trust.place(x=25,y=50)
 
-input_roll = Scale(root, from_=1000, to=2000, length=200, orient=VERTICAL)
+input_roll = Scale(root, from_=0, to=360, length=200, orient=VERTICAL)
 input_roll.place(x=100,y=50)
 
-input_yaw = Scale(root, from_=1000, to=2000, length=200, orient=VERTICAL)
+input_yaw = Scale(root, from_=0, to=360, length=200, orient=VERTICAL)
 input_yaw.place(x=175,y=50)
 
-input_pitch = Scale(root, from_=1000, to=2000, length=200, orient=VERTICAL)
+input_pitch = Scale(root, from_=0, to=180, length=200, orient=VERTICAL)
 input_pitch.place(x=250,y=50)
 
 #endregion
