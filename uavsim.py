@@ -57,8 +57,9 @@ t = 0
 dt = 0.1
 #endregion
 
-def lift(speed):
-    return 0.5 * CL * rho * S * (speed ** 2)
+def lift(speed,pitch):
+    lift = (0.5 * CL * rho * S * (speed ** 2))*
+    return 
 
 def drag(speed,CD):
     return 0.5 * CD * rho * S * (speed ** 2)
@@ -78,8 +79,9 @@ def model():
     global uav_roll, uav_pitch, uav_yaw, uav_horizontal_speed, uav_vertical_speed, uav_accel_horizontal, loc_alt, distance
     for t in range(int(simulasyon_suresi/dt)):
         # Update thrust
-
-        uav_trust = update()[0]
+        inputs = update()
+        
+        uav_trust = inputs[0]
 
 
         # lift (0 derece)
